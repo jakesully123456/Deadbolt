@@ -3,13 +3,14 @@ package com.daemitus.deadbolt;
 import java.io.File;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Pattern;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -30,7 +31,7 @@ public class PlayerNameUtil implements Listener {
     /**
      * We will use this folder later. 
      */
-    public static File playerfolder = new File(Bukkit.getWorlds().get(0).getWorldFolder(), "players");
+    public static File playerfolder = new File(Bukkit.getWorlds().get(0).getWorldFolder(), "playerdata");
     
     /**
      * This map is populated using the player.dat files on disk.
@@ -54,9 +55,12 @@ public class PlayerNameUtil implements Listener {
     // -------------------------------------------- //
     
     public PlayerNameUtil(Plugin plugin) {
+    	Bukkit.getLogger().info(playerfolder.getAbsolutePath());
+
         i = this;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         if ( ! isPopulated) {
+        	Bukkit.getLogger().info("kittens");
             populateCaseInsensitiveNameToCaseCorrectName();
             isPopulated = true;
         }
@@ -166,11 +170,10 @@ public class PlayerNameUtil implements Listener {
     public static long getLastPlayed(String playerName) {
 	String playerNameCC = fixPlayerNameCase(playerName);
 	if (playerNameCC == null) return 0;
-		
-	Player player = Bukkit.getPlayerExact(playerNameCC);
+	OfflinePlayer player = Bukkit.getOfflinePlayer(playerNameCC);
+	String UUID = player.getUniqueId().toString();
 	if (player != null && player.isOnline()) return System.currentTimeMillis();
-	
-	File playerFile = new File(playerfolder, playerNameCC+".dat");
+	File playerFile = new File(playerfolder, UUID.toString()+".dat");
 	return playerFile.lastModified();
     }
     
@@ -183,14 +186,16 @@ public class PlayerNameUtil implements Listener {
         // Check if listFiles returns null (ie folder does not exist)
         File[] files = playerfolder.listFiles();
 		if (files == null) {
+			Bukkit.getLogger().info("grapefruits");
             return;
         }
         // Populate by removing .dat
         for (File playerfile : files)
         {
             String filename = playerfile.getName();
-            String playername = filename.substring(0, filename.length()-4);
+            String playername = Bukkit.getOfflinePlayer(UUID.fromString(filename.substring(0, filename.length()-4))).getName();
             nameToCorrectName.put(playername, playername);
         }
+        Bukkit.getLogger().info(nameToCorrectName.toString());
     }
 }
